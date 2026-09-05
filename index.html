@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLOK // EXPERIMENTAL EDITORIAL</title>
+<style>
+  :root {
+    --acid: #E5FF00;
+    --void: #050505;
+    --orange: #FF4500;
+    --paper: #EBEBEB;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--void);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Global Print Noise Texture */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 9999;
+    mix-blend-mode: multiply;
+  }
+
+  /* Brutalist HUD Elements */
+  #hud {
+    position: fixed;
+    top: 24px; right: 24px;
+    font-family: monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    z-index: 100;
+    text-align: right;
+    mix-blend-mode: difference;
+    color: #fff;
+    letter-spacing: 0.05em;
+    line-height: 1.5;
+  }
+
+  .crosshair {
+    position: fixed;
+    width: 20px; height: 20px;
+    border: 1px solid #fff;
+    z-index: 100;
+    mix-blend-mode: difference;
+    pointer-events: none;
+  }
+  .crosshair.tl { top: 24px; left: 24px; border-right: none; border-bottom: none; }
+  .crosshair.tr { top: 24px; right: 24px; border-left: none; border-bottom: none; }
+  .crosshair.bl { bottom: 24px; left: 24px; border-right: none; border-top: none; }
+  .crosshair.br { bottom: 24px; right: 24px; border-left: none; border-top: none; }
+
+  /* STAGE 01: KINETIC HERO */
+  #hero {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: var(--acid);
+    overflow: hidden;
+  }
+
+  #hero-text {
+    font-family: 'Arial Black', 'Impact', sans-serif;
+    font-size: clamp(150px, 45vw, 800px);
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 0.8;
+    color: var(--void);
+    white-space: nowrap;
+    position: absolute;
+    mix-blend-mode: multiply;
+  }
+
+  #hero-sub {
+    position: absolute;
+    bottom: 15vh;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Times New Roman', serif;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--void);
+    text-align: center;
+  }
+
+  /* STAGE 02: HORIZONTAL MANIFESTO */
+  #editorial {
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    background: var(--paper);
+  }
+
+  #editorial-track {
+    display: flex;
+    height: 100%;
+    width: 300vw; /* 3 panels */
+  }
+
+  .panel {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    padding: 8vw 5vw;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .giant-num {
+    font-family: 'Arial Black', sans-serif;
+    font-size: clamp(250px, 40vw, 600px);
+    font-weight: 900;
+    line-height: 0.7;
+    color: rgba(5, 5, 5, 0.05);
+    position: absolute;
+    right: 5vw;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+    user-select: none;
+  }
+
+  .editorial-block {
+    position: relative;
+    z-index: 2;
+    max-width: 500px;
+  }
+
+  .editorial-block h3 {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 30px;
+    border-bottom: 2px solid currentColor;
+    padding-bottom: 8px;
+    display: inline-block;
+  }
+
+  .editorial-block p, .editorial-block li {
+    font-family: 'Times New Roman', serif;
+    font-size: 18px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    color: currentColor;
+  }
+
+  .editorial-block ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .editorial-block li {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    padding: 10px 0;
+    font-size: 16px;
+  }
+
+  /* Panel Variations */
+  .panel.dark {
+    background: var(--void);
+    color: var(--acid);
+  }
+  .panel.dark .giant-num { color: rgba(229, 255, 0, 0.1); }
+  .panel.dark .editorial-block li { border-bottom: 1px solid rgba(229, 255, 0, 0.2); }
+
+  /* STAGE 03: INFINITE MARQUEE */
+  #marquee-section {
+    background: var(--orange);
+    color: var(--void);
+    padding: 20px 0;
+    overflow: hidden;
+    border-top: 5px solid var(--void);
+    border-bottom: 5px solid var(--void);
+  }
+
+  .marquee-track {
+    display: flex;
+    white-space: nowrap;
+    animation: marquee 15s linear infinite;
+  }
+
+  .marquee-text {
+    font-family: 'Arial Black', sans-serif;
+    font-size: clamp(40px, 8vw, 100px);
+    font-weight: 900;
+    text-transform: uppercase;
+    padding-right: 50px;
+    font-style: italic;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Footer Data */
+  #footer-data {
+    background: var(--void);
+    color: var(--paper);
+    padding: 80px 5vw;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    font-family: monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+  
+  #footer-data h4 {
+    font-family: 'Arial Black', sans-serif;
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: var(--acid);
+  }
+
+</style>
+</head>
+<body>
+
+  <!-- HUD OVERLAYS -->
+  <div class="crosshair tl"></div>
+  <div class="crosshair tr"></div>
+  <div class="crosshair bl"></div>
+  <div class="crosshair br"></div>
+
+  <!-- STAGE 01: HERO -->
+  <section id="hero">
+    <div id="hero-text">PLOK</div>
+    <div id="hero-sub">HYPER-CARBONATED BOTANICAL MATRIX // EST 2026</div>
+  </section>
+
+  <!-- STAGE 02: EDITORIAL MANIFESTO -->
+  <section id="editorial">
+    <div id="editorial-track">
+      
+      <!-- Panel 01 -->
+      <div class="panel">
+        <div class="giant-num">01</div>
+        <div class="editorial-block">
+          <h3>The Carbonation Manifesto</h3>
+          <p>We do not whisper to our water. We scream at it. Under 4.2 volumes of CO2 pressure, the liquid fractures, creating a micro-fissure network of bubbles that we call the PLOK matrix. This is not soda. This is controlled effervescence engineered for maximum palate impact.</p>
+        </div>
+      </div>
+
+      <!-- Panel 02 -->
+      <div class="panel dark">
+        <div class="giant-num">02</div>
+        <div class="editorial-block">
+          <h3>Ingredient Architecture</h3>
+          <ul>
+            <li><span>01</span> <span>Glacial Spring Water</span></li>
+            <li><span>02</span> <span>Cane Sugar (Unrefined)</span></li>
+            <li><span>03</span> <span>Citric Acid Matrix</span></li>
+            <li><span>04</span> <span>Natural Caffeine Isolate</span></li>
+            <li><span>05</span> <span>Botanical Bittering Agents</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Panel 03 -->
+      <div class="panel">
+        <div class="giant-num">03</div>
+        <div class="editorial-block">
+          <h3>Flavor Frequency</h3>
+          <p>Tuned to 432Hz. A sensory profile that hits the palate with a sharp, acidic attack, followed by a sustained mid-note of bitter botanicals, resolving into a dry, static-free finish. Drink cold. Drink loud.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- STAGE 03: MARQUEE -->
+  <div id="marquee-section">
+    <div class="marquee-track">
+      <span class="marquee-text">DRINK PLOK / FEEL THE PLOK /&nbsp;</span>
+      <span class="marquee-text">DRINK PLOK / FEEL THE PLOK /&nbsp;</span>
+      <span class="marquee-text">DRINK PLOK / FEEL THE PLOK /&nbsp;</span>
+      <span class="marquee-text">DRINK PLOK / FEEL THE PLOK /&nbsp;</span>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer id="footer-data">
+    <div>
+      <h4>STOCKISTS</h4>
+      <p>SELECT BODEGAS / INDEPENDENT RETAILERS / DIRECT TO CONSUMER VIA ENCRYPTED PORTAL.</p>
+    </div>
+    <div style="text-align: right;">
+      <h4>CONTACT</h4>
+      <p>PRESS@PLOK.BEV<br>LEGAL@PLOK.BEV<br>DO NOT SHAKE.</p>
+    </div>
+  </footer>
+
+  <!-- SCRIPTS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // STAGE 01: Hero Typography Assembly
+    let heroTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: "#hero",
+        start: "top top",
+        end: "+=1500", // 1500px of scroll distance
+        scrub: 1,
+        pin: true,
+      }
+    });
+
+    heroTl.fromTo("#hero-text", 
+      { x: "-80vw", letterSpacing: "0.2em", scale: 0.8 }, 
+      { x: "0vw", letterSpacing: "-0.05em", scale: 0.8, ease: "none" }
+      
+    );
+
+    heroTl.fromTo("#hero-sub", 
+      { y: 50, opacity: 0 }, 
+      { y: 0, opacity: 1, ease: "power2.out" }, 
+      "+=0.5" // Starts halfway through the hero scrub
+    );
+
+    // STAGE 02: Horizontal Editorial Scrub
+    let track = document.querySelector("#editorial-track");
+    let panels = gsap.utils.toArray(".panel");
+
+    gsap.to(track, {
+      x: () => -(track.scrollWidth - window.innerWidth),
+      ease: "none",
+      scrollTrigger: {
+        trigger: "#editorial",
+        start: "top top",
+        end: () => "+=" + (track.scrollWidth - window.innerWidth),
+        scrub: 1,
+        pin: true,
+        invalidateOnRefresh: true,
+        snap: {
+          snapTo: 1 / (panels.length - 1),
+          duration: {min: 0.2, max: 0.6},
+          delay: 0.1,
+          ease: "power1.inOut"
+        }
+      }
+    });
+
+    // Refresh ScrollTrigger after fonts/layout load
+    window.addEventListener('load', () => ScrollTrigger.refresh());
+  </script>
+</body>
+</html>
